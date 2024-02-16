@@ -49,8 +49,8 @@ regd_users.post("/login", (req,res) => {
 
 // Add a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
-    const { isbn } = req.params;
-    const { review } = req.query;
+    const { isbn } = req.params.isbn;
+    const { review } = req.body.review;
     const username = req.session.username;
 
     // Find the book with the matching ISBN
@@ -73,6 +73,30 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
         res.json({ message: 'Review added successfully.', reviews: book.reviews });
     }//Write your code here
   return res.status(300).json({message: "Yet to be implemented"});
+});
+
+regd_users.delete("/auth/review/:isbn", (req, res) => {
+    const { isbn } = req.params.isbn;
+    const username = req.session.username;
+
+    // Find the book with the matching ISBN
+    const book = books[isbn];
+
+    if (!book) {
+        return res.status(404).json({ message: 'Book not found for the provided ISBN.' });
+    }
+
+    // Filter reviews based on the session username
+    const updatedReviews = book.reviews.filter(review => review.username === username);
+
+    // Check if any reviews were deleted
+    if (updatedReviews.length < book.reviews.length) {
+        // Update the book reviews with the filtered reviews
+        book.reviews = updatedReviews;
+        res.json({ message: 'Review(s) deleted successfully.', reviews: book.reviews });
+    } else {
+        res.status(404).json({ message: 'No reviews found for the provided ISBN and username.' });
+    }
 });
 
 module.exports.authenticated = regd_users;
