@@ -96,88 +96,40 @@ public_users.get('/review/:isbn',function (req, res) {
   //return res.status(300).json({message: "Yet to be implemented"});
 });
 //Task 10
-const axios = require('axios');
-
-public_users.get('/', function (req, res) {
-    axios.get('https://mdonn599-5000.theiadockernext-0-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/')
-        .then(response => {
-            const books = response.data;
-            res.send(JSON.stringify(books, null, 4));
-        })
-        .catch(error => {
-            console.error('Error fetching books:', error.message);
-            res.status(500).json({ message: 'Internal server error' });
-        });
+public_users.get('/', async function (req, res) {
+    try {
+        return res.json(books);
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        res.status(500).json({ error: 'Error fetching data' });
+    }
 });
 //Task 11
-public_users.get('/isbn/:isbn', function (req, res) {
-    const requestedisbn = req.params.isbn;
-
-    axios.get('https://mdonn599-5000.theiadockernext-0-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/isbn:isbn')
-        .then(response => {
-            const matchingBook = response.data;
-
-            if (matchingBook) {
-                res.json(matchingBook);
-            } else {
-                res.status(404).json({ message: 'No book found for the provided ISBN.' });
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching book details:', error.message);
-            res.status(500).json({ message: 'Internal server error' });
-        });
-});
+public_users.get('/isbn/:isbn',async function (req, res) {
+    try{
+    const filteredBooks = Object.values(books).filter(book => book.isbn === req.params.isbn);
+    return res.json(filteredBooks);
+    } catch(err){
+        return res.json({message:"Something went wrong"});
+    }
+ });
 //Task 12
-public_users.get('/author/:author',function (req, res) {
-    const requestedAuthor = req.params.author;
-    const bookKeys = Object.keys(books);
-    const matchingBooks = [];
-    axios.get('https://mdonn599-5000.theiadockernext-0-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/author/:author')
-    .then(response => {
-    bookKeys.forEach((key) => {
-        const book = books[key];
-        if (book.author === requestedAuthor) {
-            matchingBooks.push({ id: key, ...book });
-        }
-    });
-
-    if (matchingBooks.length === 0) {
-        res.status(404).json({ message: 'No books found for the provided author.' });
-    } else {
-        res.json(matchingBooks);
-    }//Write your code here
-  //return res.status(300).json({message: "Yet to be implemented"});
-})
-.catch(error => {
-    console.error('Error fetching book details by author:', error.message);
-    res.status(500).json({ message: 'Internal server error' });
-});
-});
+public_users.get('/author/:author',async function (req, res) {
+    try{
+        const filteredBooks = Object.values(books).filter(book => book.author === req.params.author);
+        return res.json(filteredBooks);
+    }catch(err){
+        return res.json(err,{message:"Something wrong !"});
+    }
+});  
 //Task 13
-public_users.get('/title/:title',function (req, res) {
-    const requestedTitle = req.params.title;
-    axios.get('https://mdonn599-5000.theiadockernext-0-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/title/:title')
-        .then(response => {
-    const bookKeys = Object.keys(books);
-    const matchingBooks = [];
-    bookKeys.forEach((key) => {
-        const book = books[key];
-        if (book.title === requestedTitle) {
-            matchingBooks.push({ id: key, ...book });
-        }
-    });
-
-    if (matchingBooks.length === 0) {
-        res.status(404).json({ message: 'No books found for the provided title.' });
-    } else {
-        res.json(matchingBooks);
-    }//Write your code here
-  //return res.status(300).json({message: "Yet to be implemented"});
-})
-.catch(error => {
-    console.error('Error fetching book details by title:', error.message);
-    res.status(500).json({ message: 'Internal server error' });
+public_users.get('/title/:title',async function (req, res) {
+    try {
+    const filteredBooks = Object.values(books).filter(book => book.title === req.params.title);
+    return res.json(filteredBooks);
+    } catch(err){
+        return res.json(err,{message:"Something wrong !"});
+    }
 });
 });
 module.exports.general = public_users;
