@@ -49,55 +49,51 @@ regd_users.post("/login", (req,res) => {
 
 // Add a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
-    const { isbn } = req.params.isbn;
-    const { review } = req.body.review;
-    const username = req.session.username;
+    const isbn = req.params.isbn;
+    const { review } = req.body;
+    // Add the review to the book's reviews array
+    const filteredBooks = Object.values(books).filter(book => book.isbn === isbn);
 
-    // Find the book with the matching ISBN
-    const book = books[isbn];
-
-    if (!book) {
-        return res.status(404).json({ message: 'Book not found for the provided ISBN.' });
+    if(filteredBooks.length < 1) {
+        return res.send("No book found");
+    }
+    
+    const bookToUpdate= filteredBooks[0];
+    if (!bookToUpdate.hasOwnProperty('reviews')) {
+        bookToUpdate.reviews = {};
     }
 
-    // Check if the user has already posted a review for this ISBN
-    const existingReviewIndex = book.reviews.findIndex(r => r.username === username);
+    // Add the review to the book's reviews array
+    const reviewId = Object.keys(req.user.username); // Generate a unique review ID
+    bookToUpdate.reviews[req.user.username] = review
+    return res.status(201).json({ message: "Review added successfully." });
 
-    if (existingReviewIndex !== -1) {
-        // If the user has already posted a review, modify the existing review
-        book.reviews[existingReviewIndex] = { username, review };
-        res.json({ message: 'Review modified successfully.', reviews: book.reviews });
-    } else {
-        // If the user has not posted a review, add a new review
-        book.reviews.push({ username, review });
-        res.json({ message: 'Review added successfully.', reviews: book.reviews });
-    }//Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
 });
+
 
 regd_users.delete("/auth/review/:isbn", (req, res) => {
-    const { isbn } = req.params.isbn;
-    const username = req.session.username;
+    console.log(req.user.username);
+    const filteredBooks = Object.values(books).filter(book=> book.isbn === req.params.isbn);
+    if(filteredBooks.length < 1){
+        return res.status(400).json({message:"Book not found."});
+    }
+    const filteredReviews = Object.entries(filteredBooks[0].reviews).reduce((acc, [reviewer, review]) => {
+        if (reviewer === req.user.username) {
+            acc.push(review);
+        }
+        return acc;
+    }, []);    
 
-    // Find the book with the matching ISBN
-    const book = books[isbn];
-
-    if (!book) {
-        return res.status(404).json({ message: 'Book not found for the provided ISBN.' });
+    if (filteredReviews.length === 0) {
+        return res.status(404).json({ message: "No reviews found for the current user." });
     }
 
-    // Filter reviews based on the session username
-    const updatedReviews = book.reviews.filter(review => review.username === username);
-
-    // Check if any reviews were deleted
-    if (updatedReviews.length < book.reviews.length) {
-        // Update the book reviews with the filtered reviews
-        book.reviews = updatedReviews;
-        res.json({ message: 'Review(s) deleted successfully.', reviews: book.reviews });
-    } else {
-        res.status(404).json({ message: 'No reviews found for the provided ISBN and username.' });
-    }
-});
+    // Delete the filtered reviews associated with the book
+    filteredReviews.forEach(review => {
+        delete filteredBooks[0].reviews[req.user.username];
+    });
+    return res.status(200).json({message:"Deleted Successfully"});
+})
 
 module.exports.authenticated = regd_users;
 module.exports.isValid = isValid;
